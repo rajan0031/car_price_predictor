@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Car Price Predictor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    // Function to fetch related companies dynamically
+    async function updateCompanies() {
+      const carName = document.querySelector("select[name='name']").value;
+      const companyDropdown = document.querySelector("select[name='company']");
+
+      if (!carName) {
+        companyDropdown.innerHTML = "<option value=''>Select Company</option>";
+        return;
+      }
+
+      const response = await fetch("/get_companies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ car_name: carName })
+      });
+
+      const companies = await response.json();
+
+      // Clear old options
+      companyDropdown.innerHTML = "<option value=''>Select Company</option>";
+
+      // Add new related companies
+      companies.forEach(c => {
+        let option = document.createElement("option");
+        option.value = c;
+        option.textContent = c;
+        companyDropdown.appendChild(option);
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>🚗 Car Price Predictor</h1>
+    <p class="subtitle">Enter details below to predict your car price</p>
+
+    <!-- Prediction Form -->
+    <div class="form-container">
+      <h2>🔮 Predict Price</h2>
+      <form action="/predict" method="post">
+        <select name="name" required onchange="updateCompanies()">
+          <option value="">Select Car Name</option>
+          {% for n in car_names %}
+          <option value="{{n}}">{{n}}</option>
+          {% endfor %}
+        </select>
+
+        <select name="company" required>
+          <option value="">Select Company</option>
+          {% for c in companies %}
+          <option value="{{c}}">{{c}}</option>
+          {% endfor %}
+        </select>
+
+        <input type="number" name="year" placeholder="Year" required>
+        <input type="number" name="kms_driven" placeholder="KMs Driven" required>
+
+        <select name="fuel_type" required>
+          <option value="">Select Fuel</option>
+          {% for f in fuel_types %}
+          <option value="{{f}}">{{f}}</option>
+          {% endfor %}
+        </select>
+
+        <button type="submit">Predict Price</button>
+      </form>
+
+      {% if prediction_text %}
+      <p class="result">{{ prediction_text }}</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>
